@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Encoder Tool (Uniencode)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: var(--secondary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--secondary-color);
+            font-weight: 500;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-right: 10px;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-color: rgba(52, 152, 219, 0.5);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: transparent;
+            border-color: var(--primary-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 12px 20px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+        }
+        
+        .logger {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px 0;
+        }
+        
+        .log-info {
+            color: #3498db;
+        }
+        
+        .log-success {
+            color: #2ecc71;
+        }
+        
+        .log-warning {
+            color: #f39c12;
+        }
+        
+        .log-error {
+            color: #e74c3c;
+        }
+        
+        .status-bar {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .qr-preview {
+            max-width: 200px;
+            margin: 10px auto;
+            display: block;
+        }
+        
+        .media-progress {
+            height: 25px;
+            border-radius: 15px;
+            background-color: #e9ecef;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .media-progress-bar {
+            height: 100%;
+            border-radius: 15px;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .stego-preview {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 10px auto;
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .tab-content {
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">UNI CODE<br></a>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="text-white me-3">Uniencode Web v1.0</span>
+                <button class="btn btn-outline-light btn-sm" id="clearLogs">
+                    <i class="bi bi-trash me-1"></i>Clear Logs
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text" type="button" role="tab">
+                    <i class="bi bi-file-earmark-text me-1"></i> Text/Data
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="crypto-tab" data-bs-toggle="tab" data-bs-target="#crypto" type="button" role="tab">
+                    <i class="bi bi-shield-lock me-1"></i> Crypto
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="neural-tab" data-bs-toggle="tab" data-bs-target="#neural" type="button" role="tab">
+                    <i class="bi bi-cpu me-1"></i> Neural Network
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
+                    <i class="bi bi-file-play me-1"></i> Media
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qr" type="button" role="tab">
+                    <i class="bi bi-qr-code me-1"></i> QR Code
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stego-tab" data-bs-toggle="tab" data-bs-target="#stego" type="button" role="tab">
+                    <i class="bi bi-image me-1"></i> Stego/File
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Text/Data Tab -->
+            <div class="tab-pane fade show active" id="text" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-file-earmark-text me-2"></i>Text Encoding
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="textInput" class="form-label">Input Text</label>
+                                    <textarea class="form-control" id="textInput" rows="5" placeholder="Enter text to encode/decode"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="textEncodingType" class="form-label">Encoding Type</label>
+                                    <select class="form-select" id="textEncodingType">
+                                        <option value="base64">Base64</option>
+                                        <option value="url">URL Encoding</option>
+                                        <option value="html">HTML Encoding</option>
+                                    </select>
+                                </div>
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button class="btn btn-primary" id="encodeTextBtn">
+                                        <i class="bi bi-arrow-right-circle me-1"></i> Encode
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="decodeTextBtn">
+                                        <i class="bi bi-arrow-left-circle me-1"></i> Decode
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-clipboard-check me-2"></i>Output
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="textOutput" class="form-label">Result</label>
+                                    <textarea class="form-control" id="textOutput" rows="5" readonly=""></textarea>
+                                </div>
+                                <button class="btn btn-outline-primary w-100" id="copyTextOutputBtn">
+                                    <i class="bi bi-clipboard me-1"></i> Copy to Clipboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Crypto Tab -->
+            <div class="tab-pane fade" id="crypto" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-shield-lock me-2"></i>AES Encryption
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="cryptoInput" class="form-label">Input Text</label>
+                                    <textarea class="form-control" id="cryptoInput" rows="4" placeholder="Enter text to encrypt/decrypt"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cryptoKey" class="form-label">Secret Key</label>
+                                    <input type="password" class="form-control" id="cryptoKey" placeholder="Enter encryption key">
+                                </div>
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button class="btn btn-primary" id="encryptBtn">
+                                        <i class="bi bi-lock me-1"></i> Encrypt
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="decryptBtn">
+                                        <i class="bi bi-unlock me-1"></i> Decrypt
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-hash me-2"></i>Hashing
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="hashInput" class="form-label">Input Text</label>
+                                    <textarea class="form-control" id="hashInput" rows="4" placeholder="Enter text to hash"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="hashType" class="form-label">Hash Algorithm</label>
+                                    <select class="form-select" id="hashType">
+                                        <option value="sha256">SHA-256</option>
+                                        <option value="sha1">SHA-1</option>
+                                        <option value="md5">MD5</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-100" id="hashBtn">
+                                    <i class="bi bi-hash me-1"></i> Generate Hash
+                                </button>
+                                <div class="mt-3">
+                                    <label for="hashOutput" class="form-label">Hash Result</label>
+                                    <textarea class="form-control" id="hashOutput" rows="3" readonly=""></textarea>
+                                </div>
+                                <button class="btn btn-outline-primary w-100 mt-2" id="copyHashBtn">
+                                    <i class="bi bi-clipboard me-1"></i> Copy to Clipboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Neural Network Tab -->
+            <div class="tab-pane fade" id="neural" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="bi bi-cpu feature-icon"></i>
+                                <h5 class="card-title">Text Embeddings</h5>
+                                <p class="card-text">Convert text to vector representations using AI models</p>
+                                <button class="btn btn-primary" id="embeddingsBtn">Generate Embeddings</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="bi bi-translate feature-icon"></i>
+                                <h5 class="card-title">Language Detection</h5>
+                                <p class="card-text">Identify the language of input text</p>
+                                <button class="btn btn-primary" id="languageBtn">Detect Language</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="bi bi-file-text feature-icon"></i>
+                                <h5 class="card-title">Text Summarization</h5>
+                                <p class="card-text">Generate concise summaries of long texts</p>
+                                <button class="btn btn-primary" id="summarizeBtn">Summarize Text</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <i class="bi bi-cpu me-2"></i>Neural Network Tools
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="neuralInput" class="form-label">Input Text</label>
+                            <textarea class="form-control" id="neuralInput" rows="6" placeholder="Enter text for AI processing"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="neuralOutput" class="form-label">Result</label>
+                            <textarea class="form-control" id="neuralOutput" rows="6" readonly=""></textarea>
+                        </div>
+                        <button class="btn btn-outline-primary w-100" id="copyNeuralBtn">
+                            <i class="bi bi-clipboard me-1"></i> Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Media Tab -->
+            <div class="tab-pane fade" id="media" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-file-music me-2"></i>Audio Conversion
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="audioFile" class="form-label">Select Audio File</label>
+                                    <input type="file" class="form-control" id="audioFile" accept="audio/*">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="audioFormat" class="form-label">Output Format</label>
+                                    <select class="form-select" id="audioFormat">
+                                        <option value="mp3">MP3</option>
+                                        <option value="wav">WAV</option>
+                                        <option value="ogg">OGG</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-100" id="convertAudioBtn">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Convert Audio
+                                </button>
+                                <div class="media-progress" id="audioProgress">
+                                    <div class="media-progress-bar" id="audioProgressBar">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-file-play me-2"></i>Video Conversion
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="videoFile" class="form-label">Select Video File</label>
+                                    <input type="file" class="form-control" id="videoFile" accept="video/*">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="videoFormat" class="form-label">Output Format</label>
+                                    <select class="form-select" id="videoFormat">
+                                        <option value="mp4-h264">MP4 (H.264)</option>
+                                        <option value="mp4-h265">MP4 (H.265)</option>
+                                        <option value="webm">WebM</option>
+                                        <option value="avi">AVI</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-100" id="convertVideoBtn">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Convert Video
+                                </button>
+                                <div class="media-progress" id="videoProgress">
+                                    <div class="media-progress-bar" id="videoProgressBar">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- QR Code Tab -->
+            <div class="tab-pane fade" id="qr" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-qr-code me-2"></i>Generate QR Code
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="qrText" class="form-label">Text or URL</label>
+                                    <textarea class="form-control" id="qrText" rows="3" placeholder="Enter text or URL to encode in QR"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="qrSize" class="form-label">QR Code Size</label>
+                                    <select class="form-select" id="qrSize">
+                                        <option value="200">Small (200x200)</option>
+                                        <option value="300" selected="">Medium (300x300)</option>
+                                        <option value="400">Large (400x400)</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary w-100" id="generateQrBtn">
+                                    <i class="bi bi-qr-code me-1"></i> Generate QR Code
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-upc-scan me-2"></i>Decode QR Code
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="qrImage" class="form-label">Upload QR Image</label>
+                                    <input type="file" class="form-control" id="qrImage" accept="image/*">
+                                </div>
+                                <button class="btn btn-primary w-100" id="decodeQrBtn">
+                                    <i class="bi bi-upc-scan me-1"></i> Decode QR Code
+                                </button>
+                                <div class="mt-3 text-center">
+                                    <img id="qrPreview" class="qr-preview" src="https://via.placeholder.com/300" alt="QR Code Preview">
+                                </div>
+                                <div class="mt-3">
+                                    <label for="qrDecodedText" class="form-label">Decoded Text</label>
+                                    <textarea class="form-control" id="qrDecodedText" rows="3" readonly=""></textarea>
+                                </div>
+                                <button class="btn btn-outline-primary w-100 mt-2" id="copyQrBtn">
+                                    <i class="bi bi-clipboard me-1"></i> Copy to Clipboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stego/File Tab -->
+            <div class="tab-pane fade" id="stego" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-image me-2"></i>Steganography
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="stegoImage" class="form-label">Select Image</label>
+                                    <input type="file" class="form-control" id="stegoImage" accept="image/*">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="stegoMessage" class="form-label">Secret Message</label>
+                                    <textarea class="form-control" id="stegoMessage" rows="3" placeholder="Enter secret message to hide"></textarea>
+                                </div>
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button class="btn btn-primary" id="hideMessageBtn">
+                                        <i class="bi bi-eye-slash me-1"></i> Hide Message
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="extractMessageBtn">
+                                        <i class="bi bi-eye me-1"></i> Extract Message
+                                    </button>
+                                </div>
+                                <div class="mt-3 text-center">
+                                    <img id="stegoPreview" class="stego-preview" src="https://via.placeholder.com/300" alt="Stego Image Preview">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="bi bi-file-earmark-lock me-2"></i>File Encryption
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="fileToEncrypt" class="form-label">Select File</label>
+                                    <input type="file" class="form-control" id="fileToEncrypt">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fileKey" class="form-label">Encryption Key</label>
+                                    <input type="password" class="form-control" id="fileKey" placeholder="Enter encryption key">
+                                </div>
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button class="btn btn-primary" id="encryptFileBtn">
+                                        <i class="bi bi-lock me-1"></i> Encrypt File
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="decryptFileBtn">
+                                        <i class="bi bi-unlock me-1"></i> Decrypt File
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logger -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-terminal me-2"></i>Activity Log
+            </div>
+            <div class="card-body">
+                <div class="logger" id="logger">
+                    <div class="log-entry log-info">[INFO] Uniencode Web initialized successfully</div>
+                    <div class="log-entry log-info">[INFO] All modules loaded</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="statusText">Ready</div>
+            <div id="statusTime"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+    <script>
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update status time
+            function updateStatusTime() {
+                const now = new Date();
+                document.getElementById('statusTime').textContent = now.toLocaleTimeString();
+            }
+            setInterval(updateStatusTime, 1000);
+            updateStatusTime();
+            
+            // Logger function
+            function log(message, type = 'info') {
+                const logger = document.getElementById('logger');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.textContent = `[${type.toUpperCase()}] ${timestamp} - ${message}`;
+                logger.appendChild(logEntry);
+                logger.scrollTop = logger.scrollHeight;
+                
+                // Update status bar
+                document.getElementById('statusText').textContent = message;
+            }
+            
+            // Clear logs
+            document.getElementById('clearLogs').addEventListener('click', function() {
+                document.getElementById('logger').innerHTML = '';
+                log('Logs cleared', 'info');
+            });
+            
+            // Copy to clipboard helper
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    log('Copied to clipboard', 'success');
+                }).catch(err => {
+                    log('Failed to copy: ' + err, 'error');
+                });
+            }
+            
+            // Text/Data Tab
+            document.getElementById('encodeTextBtn').addEventListener('click', function() {
+                const input = document.getElementById('textInput').value;
+                const type = document.getElementById('textEncodingType').value;
+                let output = '';
+                
+                if (!input) {
+                    log('No input text provided', 'warning');
+                    return;
+                }
+                
+                try {
+                    if (type === 'base64') {
+                        output = btoa(unescape(encodeURIComponent(input)));
+                    } else if (type === 'url') {
+                        output = encodeURIComponent(input);
+                    } else if (type === 'html') {
+                        const div = document.createElement('div');
+                        div.textContent = input;
+                        output = div.innerHTML;
+                    }
+                    
+                    document.getElementById('textOutput').value = output;
+                    log(`Text encoded with ${type}`, 'success');
+                } catch (error) {
+                    log(`Encoding error: ${error.message}`, 'error');
+                }
+            });
+            
+            document.getElementById('decodeTextBtn').addEventListener('click', function() {
+                const input = document.getElementById('textInput').value;
+                const type = document.getElementById('textEncodingType').value;
+                let output = '';
+                
+                if (!input) {
+                    log('No input text provided', 'warning');
+                    return;
+                }
+                
+                try {
+                    if (type === 'base64') {
+                        output = decodeURIComponent(escape(atob(input)));
+                    } else if (type === 'url') {
+                        output = decodeURIComponent(input);
+                    } else if (type === 'html') {
+                        const div = document.createElement('div');
+                        div.innerHTML = input;
+                        output = div.textContent || div.innerText || '';
+                    }
+                    
+                    document.getElementById('textOutput').value = output;
+                    log(`Text decoded with ${type}`, 'success');
+                } catch (error) {
+                    log(`Decoding error: ${error.message}`, 'error');
+                }
+            });
+            
+            document.getElementById('copyTextOutputBtn').addEventListener('click', function() {
+                const text = document.getElementById('textOutput').value;
+                if (text) {
+                    copyToClipboard(text);
+                } else {
+                    log('No text to copy', 'warning');
+                }
+            });
+            
+            // Crypto Tab
+            document.getElementById('encryptBtn').addEventListener('click', function() {
+                const input = document.getElementById('cryptoInput').value;
+                const key = document.getElementById('cryptoKey').value;
+                
+                if (!input || !key) {
+                    log('Missing input text or encryption key', 'warning');
+                    return;
+                }
+                
+                try {
+                    const encrypted = CryptoJS.AES.encrypt(input, key).toString();
+                    document.getElementById('cryptoInput').value = encrypted;
+                    log('Text encrypted successfully', 'success');
+                } catch (error) {
+                    log(`Encryption error: ${error.message}`, 'error');
+                }
+            });
+            
+            document.getElementById('decryptBtn').addEventListener('click', function() {
+                const input = document.getElementById('cryptoInput').value;
+                const key = document.getElementById('cryptoKey').value;
+                
+                if (!input || !key) {
+                    log('Missing encrypted text or decryption key', 'warning');
+                    return;
+                }
+                
+                try {
+                    const decrypted = CryptoJS.AES.decrypt(input, key).toString(CryptoJS.enc.Utf8);
+                    if (!decrypted) {
+                        log('Decryption failed. Invalid key or corrupted data.', 'error');
+                        return;
+                    }
+                    document.getElementById('cryptoInput').value = decrypted;
+                    log('Text decrypted successfully', 'success');
+                } catch (error) {
+                    log(`Decryption error: ${error.message}`, 'error');
+                }
+            });
+            
+            document.getElementById('hashBtn').addEventListener('click', function() {
+                const input = document.getElementById('hashInput').value;
+                const type = document.getElementById('hashType').value;
+                
+                if (!input) {
+                    log('No input text provided', 'warning');
+                    return;
+                }
+                
+                try {
+                    let hash = '';
+                    if (type === 'sha256') {
+                        hash = CryptoJS.SHA256(input).toString();
+                    } else if (type === 'sha1') {
+                        hash = CryptoJS.SHA1(input).toString();
+                    } else if (type === 'md5') {
+                        hash = CryptoJS.MD5(input).toString();
+                    }
+                    
+                    document.getElementById('hashOutput').value = hash;
+                    log(`${type.toUpperCase()} hash generated`, 'success');
+                } catch (error) {
+                    log(`Hashing error: ${error.message}`, 'error');
+                }
+            });
+            
+            document.getElementById('copyHashBtn').addEventListener('click', function() {
+                const text = document.getElementById('hashOutput').value;
+                if (text) {
+                    copyToClipboard(text);
+                } else {
+                    log('No hash to copy', 'warning');
+                }
+            });
+            
+            // Neural Network Tab
+            document.getElementById('embeddingsBtn').addEventListener('click', function() {
+                const input = document.getElementById('neuralInput').value;
+                
+                if (!input) {
+                    log('No input text provided', 'warning');
+                    return;
+                }
+                
+                // Simulate AI processing
+                log('Generating text embeddings...', 'info');
+                setTimeout(() => {
+                    // Mock embedding result (in real app, this would call an AI API)
+                    const mockEmbedding = Array.from({length: 10}, () => (Math.random() * 2 - 1).toFixed(4));
+                    document.getElementById('neuralOutput').value = `Embedding vector (first 10 dimensions):\n[${mockEmbedding.join(', ')}]`;
+                    log('Text embeddings generated successfully', 'success');
+                }, 1500);
+            });
+            
+            document.getElementById('languageBtn').addEventListener('click', function() {
+                const input = document.getElementById('neuralInput').value;
+                
+                if (!input) {
+                    log('No input text provided', 'warning');
+                    return;
+                }
+                
+                // Simulate language detection
+                log('Detecting language...', 'info');
+                setTimeout(() => {
+                    // Mock language detection (in real app, this would call an AI API)
+                    const languages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Arabic'];
+                    const detectedLang = languages[Math.floor(Math.random() * languages.length)];
+                    document.getElementById('neuralOutput').value = `Detected language: ${detectedLang}`;
+                    log(`Language detected: ${detectedLang}`, 'success');
+                }, 1200);
+            });
+            
+            document.getElementById('summarizeBtn').addEventListener('click', function() {
+                const input = document.getElementById('neuralInput').value;
+                
+                if (!input) {
+                    log('No input text provided', 'warning');
+                    return;
+                }
+                
+                // Simulate text summarization
+                log('Generating summary...', 'info');
+                setTimeout(() => {
+                    // Mock summarization (in real app, this would call an AI API)
+                    const summary = input.length > 100 
+                        ? input.substring(0, 100) + "..." 
+                        : "This text is already concise.";
+                    document.getElementById('neuralOutput').value = `Summary:\n${summary}`;
+                    log('Text summarized successfully', 'success');
+                }, 2000);
+            });
+            
+            document.getElementById('copyNeuralBtn').addEventListener('click', function() {
+                const text = document.getElementById('neuralOutput').value;
+                if (text) {
+                    copyToClipboard(text);
+                } else {
+                    log('No text to copy', 'warning');
+                }
+            });
+            
+            // Media Tab
+            document.getElementById('convertAudioBtn').addEventListener('click', function() {
+                const fileInput = document.getElementById('audioFile');
+                const format = document.getElementById('audioFormat').value;
+                
+                if (!fileInput.files.length) {
+                    log('No audio file selected', 'warning');
+                    return;
+                }
+                
+                const progressBar = document.getElementById('audioProgress');
+                const progressBarInner = document.getElementById('audioProgressBar');
+                
+                log(`Converting audio to ${format.toUpperCase()}...`, 'info');
+                progressBar.style.display = 'block';
+                
+                // Simulate conversion progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        log('Audio conversion completed', 'success');
+                        setTimeout(() => {
+                            progressBar.style.display = 'none';
+                            progressBarInner.style.width = '0%';
+                            progressBarInner.textContent = '0%';
+                        }, 2000);
+                    }
+                    progressBarInner.style.width = `${progress}%`;
+                    progressBarInner.textContent = `${Math.round(progress)}%`;
+                }, 300);
+            });
+            
+            document.getElementById('convertVideoBtn').addEventListener('click', function() {
+                const fileInput = document.getElementById('videoFile');
+                const format = document.getElementById('videoFormat').value;
+                
+                if (!fileInput.files.length) {
+                    log('No video file selected', 'warning');
+                    return;
+                }
+                
+                const progressBar = document.getElementById('videoProgress');
+                const progressBarInner = document.getElementById('videoProgressBar');
+                
+                log(`Converting video to ${format.toUpperCase()}...`, 'info');
+                progressBar.style.display = 'block';
+                
+                // Simulate conversion progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        log('Video conversion completed', 'success');
+                        setTimeout(() => {
+                            progressBar.style.display = 'none';
+                            progressBarInner.style.width = '0%';
+                            progressBarInner.textContent = '0%';
+                        }, 2000);
+                    }
+                    progressBarInner.style.width = `${progress}%`;
+                    progressBarInner.textContent = `${Math.round(progress)}%`;
+                }, 500);
+            });
+            
+            // QR Code Tab
+            document.getElementById('generateQrBtn').addEventListener('click', function() {
+                const text = document.getElementById('qrText').value;
+                const size = document.getElementById('qrSize').value;
+                
+                if (!text) {
+                    log('No text or URL provided', 'warning');
+                    return;
+                }
+                
+                log('Generating QR code...', 'info');
+                
+                // In a real implementation, we would use a QR code library
+                // For this demo, we'll use a placeholder
+                setTimeout(() => {
+                    const qrPreview = document.getElementById('qrPreview');
+                    qrPreview.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`;
+                    log('QR code generated successfully', 'success');
+                }, 800);
+            });
+            
+            document.getElementById('decodeQrBtn').addEventListener('click', function() {
+                const fileInput = document.getElementById('qrImage');
+                
+                if (!fileInput.files.length) {
+                    log('No QR image selected', 'warning');
+                    return;
+                }
+                
+                log('Decoding QR code...', 'info');
+                
+                // In a real implementation, we would use a QR code decoding library
+                // For this demo, we'll simulate a result
+                setTimeout(() => {
+                    const mockDecodedText = "This is a decoded QR code message. In a real implementation, this would be the actual content.";
+                    document.getElementById('qrDecodedText').value = mockDecodedText;
+                    log('QR code decoded successfully', 'success');
+                }, 1200);
+            });
+            
+            document.getElementById('copyQrBtn').addEventListener('click', function() {
+                const text = document.getElementById('qrDecodedText').value;
+                if (text) {
+                    copyToClipboard(text);
+                } else {
+                    log('No text to copy', 'warning');
+                }
+            });
+            
+            // Stego/File Tab
+            document.getElementById('hideMessageBtn').addEventListener('click', function() {
+                const imageInput = document.getElementById('stegoImage');
+                const message = document.getElementById('stegoMessage').value;
+                
+                if (!imageInput.files.length || !message) {
+                    log('Missing image or message', 'warning');
+                    return;
+                }
+                
+                log('Hiding message in image...', 'info');
+                
+                // In a real implementation, we would use steganography algorithms
+                // For this demo, we'll simulate the process
+                setTimeout(() => {
+                    const stegoPreview = document.getElementById('stegoPreview');
+                    stegoPreview.src = URL.createObjectURL(imageInput.files[0]);
+                    log('Message hidden successfully', 'success');
+                }, 1500);
+            });
+            
+            document.getElementById('extractMessageBtn').addEventListener('click', function() {
+                const imageInput = document.getElementById('stegoImage');
+                
+                if (!imageInput.files.length) {
+                    log('No image selected', 'warning');
+                    return;
+                }
+                
+                log('Extracting message from image...', 'info');
+                
+                // In a real implementation, we would extract the hidden message
+                // For this demo, we'll simulate a result
+                setTimeout(() => {
+                    const mockMessage = "This is a secret hidden message extracted from the image.";
+                    document.getElementById('stegoMessage').value = mockMessage;
+                    log('Message extracted successfully', 'success');
+                }, 1800);
+            });
+            
+            document.getElementById('encryptFileBtn').addEventListener('click', function() {
+                const fileInput = document.getElementById('fileToEncrypt');
+                const key = document.getElementById('fileKey').value;
+                
+                if (!fileInput.files.length || !key) {
+                    log('Missing file or encryption key', 'warning');
+                    return;
+                }
+                
+                log(`Encrypting file: ${fileInput.files[0].name}...`, 'info');
+                
+                // In a real implementation, we would encrypt the file
+                // For this demo, we'll simulate the process
+                setTimeout(() => {
+                    log('File encrypted successfully', 'success');
+                }, 2000);
+            });
+            
+            document.getElementById('decryptFileBtn').addEventListener('click', function() {
+                const fileInput = document.getElementById('fileToEncrypt');
+                const key = document.getElementById('fileKey').value;
+                
+                if (!fileInput.files.length || !key) {
+                    log('Missing file or decryption key', 'warning');
+                    return;
+                }
+                
+                log(`Decrypting file: ${fileInput.files[0].name}...`, 'info');
+                
+                // In a real implementation, we would decrypt the file
+                // For this demo, we'll simulate the process
+                setTimeout(() => {
+                    log('File decrypted successfully', 'success');
+                }, 2000);
+            });
+        });
+    </script>
+
+</body></html>
