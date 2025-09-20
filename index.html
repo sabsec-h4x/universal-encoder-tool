@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Encoder Tool (Uniencode)</title>
+    <title>Universal Encoder Tool (Uniencode) - Real-Time Web Application</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -174,6 +177,42 @@
             border-radius: 0 0 10px 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,.1);
         }
+        
+        .encoding-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .encoding-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .encoding-card h5 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .binary-output {
+            font-family: 'Courier New', Courier, monospace;
+            word-break: break-all;
+            background-color: #f1f1f1;
+            padding: 8px;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .morse-output {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            background-color: #f1f1f1;
+            padding: 8px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -243,7 +282,18 @@
                                         <option value="base64">Base64</option>
                                         <option value="url">URL Encoding</option>
                                         <option value="html">HTML Encoding</option>
+                                        <option value="binary">Binary</option>
+                                        <option value="hex">Hexadecimal</option>
+                                        <option value="morse">Morse Code</option>
+                                        <option value="caesar">Caesar Cipher</option>
+                                        <option value="rot13">ROT13</option>
+                                        <option value="atbash">Atbash Cipher</option>
+                                        <option value="reverse">Reverse Text</option>
                                     </select>
+                                </div>
+                                <div class="mb-3" id="caesarShiftContainer" style="display: none;">
+                                    <label for="caesarShift" class="form-label">Shift Value</label>
+                                    <input type="number" class="form-control" id="caesarShift" value="3" min="1" max="25">
                                 </div>
                                 <div class="d-grid gap-2 d-md-flex">
                                     <button class="btn btn-primary" id="encodeTextBtn">
@@ -264,11 +314,55 @@
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label for="textOutput" class="form-label">Result</label>
-                                    <textarea class="form-control" id="textOutput" rows="5" readonly=""></textarea>
+                                    <div id="textOutputContainer">
+                                        <textarea class="form-control" id="textOutput" rows="5" readonly=""></textarea>
+                                        <div id="binaryOutput" class="binary-output" style="display: none;"></div>
+                                        <div id="morseOutput" class="morse-output" style="display: none;"></div>
+                                    </div>
                                 </div>
                                 <button class="btn btn-outline-primary w-100" id="copyTextOutputBtn">
                                     <i class="bi bi-clipboard me-1"></i> Copy to Clipboard
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <i class="bi bi-grid me-2"></i>Quick Encoding Tools
+                    </div>
+                    <div class="card-body">
+                        <div class="encoding-grid">
+                            <div class="encoding-card">
+                                <h5>Base64</h5>
+                                <p>Encode/decode text to Base64 format</p>
+                                <button class="btn btn-sm btn-outline-primary w-100 base64-quick">Quick Base64</button>
+                            </div>
+                            <div class="encoding-card">
+                                <h5>URL</h5>
+                                <p>Encode/decode URLs safely</p>
+                                <button class="btn btn-sm btn-outline-primary w-100 url-quick">Quick URL</button>
+                            </div>
+                            <div class="encoding-card">
+                                <h5>HTML</h5>
+                                <p>Encode/decode HTML entities</p>
+                                <button class="btn btn-sm btn-outline-primary w-100 html-quick">Quick HTML</button>
+                            </div>
+                            <div class="encoding-card">
+                                <h5>Binary</h5>
+                                <p>Convert text to binary and back</p>
+                                <button class="btn btn-sm btn-outline-primary w-100 binary-quick">Quick Binary</button>
+                            </div>
+                            <div class="encoding-card">
+                                <h5>Hex</h5>
+                                <p>Convert text to hexadecimal</p>
+                                <button class="btn btn-sm btn-outline-primary w-100 hex-quick">Quick Hex</button>
+                            </div>
+                            <div class="encoding-card">
+                                <h5>Morse</h5>
+                                <p>Encode/decode Morse code</p>
+                                <button class="btn btn-sm btn-outline-primary w-100 morse-quick">Quick Morse</button>
                             </div>
                         </div>
                     </div>
@@ -291,6 +385,7 @@
                                 <div class="mb-3">
                                     <label for="cryptoKey" class="form-label">Secret Key</label>
                                     <input type="password" class="form-control" id="cryptoKey" placeholder="Enter encryption key">
+                                    <div class="form-text">Key should be at least 8 characters for security</div>
                                 </div>
                                 <div class="d-grid gap-2 d-md-flex">
                                     <button class="btn btn-primary" id="encryptBtn">
@@ -298,6 +393,9 @@
                                     </button>
                                     <button class="btn btn-outline-secondary" id="decryptBtn">
                                         <i class="bi bi-unlock me-1"></i> Decrypt
+                                    </button>
+                                    <button class="btn btn-outline-warning" id="generateKeyBtn">
+                                        <i class="bi bi-key me-1"></i> Generate Key
                                     </button>
                                 </div>
                             </div>
@@ -317,6 +415,7 @@
                                     <label for="hashType" class="form-label">Hash Algorithm</label>
                                     <select class="form-select" id="hashType">
                                         <option value="sha256">SHA-256</option>
+                                        <option value="sha512">SHA-512</option>
                                         <option value="sha1">SHA-1</option>
                                         <option value="md5">MD5</option>
                                     </select>
@@ -411,6 +510,15 @@
                                         <option value="mp3">MP3</option>
                                         <option value="wav">WAV</option>
                                         <option value="ogg">OGG</option>
+                                        <option value="flac">FLAC</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="audioQuality" class="form-label">Quality</label>
+                                    <select class="form-select" id="audioQuality">
+                                        <option value="low">Low (128kbps)</option>
+                                        <option value="medium" selected>Medium (192kbps)</option>
+                                        <option value="high">High (320kbps)</option>
                                     </select>
                                 </div>
                                 <button class="btn btn-primary w-100" id="convertAudioBtn">
@@ -439,6 +547,15 @@
                                         <option value="mp4-h265">MP4 (H.265)</option>
                                         <option value="webm">WebM</option>
                                         <option value="avi">AVI</option>
+                                        <option value="mov">MOV</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="videoQuality" class="form-label">Quality</label>
+                                    <select class="form-select" id="videoQuality">
+                                        <option value="low">Low (480p)</option>
+                                        <option value="medium" selected>Medium (720p)</option>
+                                        <option value="high">High (1080p)</option>
                                     </select>
                                 </div>
                                 <button class="btn btn-primary w-100" id="convertVideoBtn">
@@ -470,9 +587,18 @@
                                     <label for="qrSize" class="form-label">QR Code Size</label>
                                     <select class="form-select" id="qrSize">
                                         <option value="200">Small (200x200)</option>
-                                        <option value="300" selected="">Medium (300x300)</option>
+                                        <option value="300" selected>Medium (300x300)</option>
                                         <option value="400">Large (400x400)</option>
+                                        <option value="500">Extra Large (500x500)</option>
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="qrColor" class="form-label">QR Code Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="qrColor" value="#000000">
+                                        <input type="color" class="form-control form-control-color" id="qrBgColor" value="#ffffff">
+                                        <span class="input-group-text">Background</span>
+                                    </div>
                                 </div>
                                 <button class="btn btn-primary w-100" id="generateQrBtn">
                                     <i class="bi bi-qr-code me-1"></i> Generate QR Code
@@ -494,7 +620,8 @@
                                     <i class="bi bi-upc-scan me-1"></i> Decode QR Code
                                 </button>
                                 <div class="mt-3 text-center">
-                                    <img id="qrPreview" class="qr-preview" src="https://via.placeholder.com/300" alt="QR Code Preview">
+                                    <canvas id="qrPreview" class="qr-preview" style="display: none;"></canvas>
+                                    <img id="qrPreviewImg" class="qr-preview" src="https://via.placeholder.com/300" alt="QR Code Preview">
                                 </div>
                                 <div class="mt-3">
                                     <label for="qrDecodedText" class="form-label">Decoded Text</label>
@@ -526,6 +653,10 @@
                                     <label for="stegoMessage" class="form-label">Secret Message</label>
                                     <textarea class="form-control" id="stegoMessage" rows="3" placeholder="Enter secret message to hide"></textarea>
                                 </div>
+                                <div class="mb-3">
+                                    <label for="stegoPassword" class="form-label">Password (Optional)</label>
+                                    <input type="password" class="form-control" id="stegoPassword" placeholder="Enter password for extra security">
+                                </div>
                                 <div class="d-grid gap-2 d-md-flex">
                                     <button class="btn btn-primary" id="hideMessageBtn">
                                         <i class="bi bi-eye-slash me-1"></i> Hide Message
@@ -553,6 +684,7 @@
                                 <div class="mb-3">
                                     <label for="fileKey" class="form-label">Encryption Key</label>
                                     <input type="password" class="form-control" id="fileKey" placeholder="Enter encryption key">
+                                    <div class="form-text">Key should be at least 8 characters for security</div>
                                 </div>
                                 <div class="d-grid gap-2 d-md-flex">
                                     <button class="btn btn-primary" id="encryptFileBtn">
@@ -561,6 +693,14 @@
                                     <button class="btn btn-outline-secondary" id="decryptFileBtn">
                                         <i class="bi bi-unlock me-1"></i> Decrypt File
                                     </button>
+                                    <button class="btn btn-outline-warning" id="generateFileKeyBtn">
+                                        <i class="bi bi-key me-1"></i> Generate Key
+                                    </button>
+                                </div>
+                                <div class="mt-3">
+                                    <div id="fileStatus" class="alert alert-info" style="display: none;">
+                                        No file processed yet
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -590,7 +730,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
     <script>
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
@@ -631,7 +770,141 @@
                 });
             }
             
-            // Text/Data Tab
+            // Show/hide Caesar shift input
+            document.getElementById('textEncodingType').addEventListener('change', function() {
+                const caesarShiftContainer = document.getElementById('caesarShiftContainer');
+                if (this.value === 'caesar') {
+                    caesarShiftContainer.style.display = 'block';
+                } else {
+                    caesarShiftContainer.style.display = 'none';
+                }
+            });
+            
+            // Text/Data Tab - Encoding/Decoding functions
+            const encodingFunctions = {
+                base64: {
+                    encode: (text) => btoa(unescape(encodeURIComponent(text))),
+                    decode: (text) => decodeURIComponent(escape(atob(text)))
+                },
+                url: {
+                    encode: (text) => encodeURIComponent(text),
+                    decode: (text) => decodeURIComponent(text)
+                },
+                html: {
+                    encode: (text) => {
+                        const div = document.createElement('div');
+                        div.textContent = text;
+                        return div.innerHTML;
+                    },
+                    decode: (text) => {
+                        const div = document.createElement('div');
+                        div.innerHTML = text;
+                        return div.textContent || div.innerText || '';
+                    }
+                },
+                binary: {
+                    encode: (text) => {
+                        return text.split('').map(char => 
+                            char.charCodeAt(0).toString(2).padStart(8, '0')
+                        ).join(' ');
+                    },
+                    decode: (text) => {
+                        return text.split(' ').map(bin => 
+                            String.fromCharCode(parseInt(bin, 2))
+                        ).join('');
+                    }
+                },
+                hex: {
+                    encode: (text) => {
+                        return text.split('').map(char => 
+                            char.charCodeAt(0).toString(16).padStart(2, '0')
+                        ).join(' ');
+                    },
+                    decode: (text) => {
+                        return text.split(' ').map(hex => 
+                            String.fromCharCode(parseInt(hex, 16))
+                        ).join('');
+                    }
+                },
+                morse: {
+                    encode: (text) => {
+                        const morseCode = {
+                            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+                            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+                            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+                            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+                            'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+                            '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+                            '8': '---..', '9': '----.', '.': '.-.-.-', ',': '--..--', '?': '..--..',
+                            "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-',
+                            '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.',
+                            '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.',
+                            ' ': '/'
+                        };
+                        
+                        return text.toUpperCase().split('').map(char => morseCode[char] || char).join(' ');
+                    },
+                    decode: (text) => {
+                        const morseCode = {
+                            '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E', '..-.': 'F',
+                            '--.': 'G', '....': 'H', '..': 'I', '.---': 'J', '-.-': 'K', '.-..': 'L',
+                            '--': 'M', '-.': 'N', '---': 'O', '.--.': 'P', '--.-': 'Q', '.-.': 'R',
+                            '...': 'S', '-': 'T', '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X',
+                            '-.--': 'Y', '--..': 'Z', '-----': '0', '.----': '1', '..---': '2',
+                            '...--': '3', '....-': '4', '.....': '5', '-....': '6', '--...': '7',
+                            '---..': '8', '----.': '9', '.-.-.-': '.', '--..--': ',', '..--..': '?',
+                            '.----.': "'", '-.-.-.': '!', '-..-.': '/', '-.--.': '(', '-.--.-': ')',
+                            '.-...': '&', '---...': ':', '-.-.-.': ';', '-...-': '=', '.-.-.': '+',
+                            '-....-': '-', '..--.-': '_', '.-..-.': '"', '...-..-': '$', '.--.-.': '@',
+                            '/': ' '
+                        };
+                        
+                        return text.split(' ').map(code => morseCode[code] || code).join('');
+                    }
+                },
+                caesar: {
+                    encode: (text, shift) => {
+                        shift = parseInt(shift) || 3;
+                        return text.split('').map(char => {
+                            if (char.match(/[a-z]/i)) {
+                                const code = char.charCodeAt(0);
+                                const isUpperCase = code >= 65 && code <= 90;
+                                const base = isUpperCase ? 65 : 97;
+                                return String.fromCharCode(((code - base + shift) % 26) + base);
+                            }
+                            return char;
+                        }).join('');
+                    },
+                    decode: (text, shift) => {
+                        shift = parseInt(shift) || 3;
+                        return encodingFunctions.caesar.encode(text, 26 - shift);
+                    }
+                },
+                rot13: {
+                    encode: (text) => encodingFunctions.caesar.encode(text, 13),
+                    decode: (text) => encodingFunctions.caesar.decode(text, 13)
+                },
+                atbash: {
+                    encode: (text) => {
+                        return text.split('').map(char => {
+                            if (char.match(/[a-z]/i)) {
+                                const code = char.charCodeAt(0);
+                                const isUpperCase = code >= 65 && code <= 90;
+                                const base = isUpperCase ? 65 : 97;
+                                return String.fromCharCode((25 - (code - base)) + base);
+                            }
+                            return char;
+                        }).join('');
+                    },
+                    decode: (text) => encodingFunctions.atbash.encode(text)
+                },
+                reverse: {
+                    encode: (text) => text.split('').reverse().join(''),
+                    decode: (text) => text.split('').reverse().join('')
+                }
+            };
+            
+            // Text encoding/decoding
             document.getElementById('encodeTextBtn').addEventListener('click', function() {
                 const input = document.getElementById('textInput').value;
                 const type = document.getElementById('textEncodingType').value;
@@ -643,17 +916,34 @@
                 }
                 
                 try {
-                    if (type === 'base64') {
-                        output = btoa(unescape(encodeURIComponent(input)));
-                    } else if (type === 'url') {
-                        output = encodeURIComponent(input);
-                    } else if (type === 'html') {
-                        const div = document.createElement('div');
-                        div.textContent = input;
-                        output = div.innerHTML;
+                    if (type === 'caesar') {
+                        const shift = document.getElementById('caesarShift').value;
+                        output = encodingFunctions[type].encode(input, shift);
+                    } else {
+                        output = encodingFunctions[type].encode(input);
                     }
                     
-                    document.getElementById('textOutput').value = output;
+                    // Display output based on type
+                    const textOutput = document.getElementById('textOutput');
+                    const binaryOutput = document.getElementById('binaryOutput');
+                    const morseOutput = document.getElementById('morseOutput');
+                    
+                    // Hide all output containers first
+                    textOutput.style.display = 'none';
+                    binaryOutput.style.display = 'none';
+                    morseOutput.style.display = 'none';
+                    
+                    if (type === 'binary') {
+                        binaryOutput.textContent = output;
+                        binaryOutput.style.display = 'block';
+                    } else if (type === 'morse') {
+                        morseOutput.textContent = output;
+                        morseOutput.style.display = 'block';
+                    } else {
+                        textOutput.value = output;
+                        textOutput.style.display = 'block';
+                    }
+                    
                     log(`Text encoded with ${type}`, 'success');
                 } catch (error) {
                     log(`Encoding error: ${error.message}`, 'error');
@@ -671,17 +961,34 @@
                 }
                 
                 try {
-                    if (type === 'base64') {
-                        output = decodeURIComponent(escape(atob(input)));
-                    } else if (type === 'url') {
-                        output = decodeURIComponent(input);
-                    } else if (type === 'html') {
-                        const div = document.createElement('div');
-                        div.innerHTML = input;
-                        output = div.textContent || div.innerText || '';
+                    if (type === 'caesar') {
+                        const shift = document.getElementById('caesarShift').value;
+                        output = encodingFunctions[type].decode(input, shift);
+                    } else {
+                        output = encodingFunctions[type].decode(input);
                     }
                     
-                    document.getElementById('textOutput').value = output;
+                    // Display output based on type
+                    const textOutput = document.getElementById('textOutput');
+                    const binaryOutput = document.getElementById('binaryOutput');
+                    const morseOutput = document.getElementById('morseOutput');
+                    
+                    // Hide all output containers first
+                    textOutput.style.display = 'none';
+                    binaryOutput.style.display = 'none';
+                    morseOutput.style.display = 'none';
+                    
+                    if (type === 'binary') {
+                        binaryOutput.textContent = output;
+                        binaryOutput.style.display = 'block';
+                    } else if (type === 'morse') {
+                        morseOutput.textContent = output;
+                        morseOutput.style.display = 'block';
+                    } else {
+                        textOutput.value = output;
+                        textOutput.style.display = 'block';
+                    }
+                    
                     log(`Text decoded with ${type}`, 'success');
                 } catch (error) {
                     log(`Decoding error: ${error.message}`, 'error');
@@ -689,12 +996,68 @@
             });
             
             document.getElementById('copyTextOutputBtn').addEventListener('click', function() {
-                const text = document.getElementById('textOutput').value;
-                if (text) {
-                    copyToClipboard(text);
+                const textOutput = document.getElementById('textOutput');
+                const binaryOutput = document.getElementById('binaryOutput');
+                const morseOutput = document.getElementById('morseOutput');
+                
+                let textToCopy = '';
+                
+                if (textOutput.style.display !== 'none') {
+                    textToCopy = textOutput.value;
+                } else if (binaryOutput.style.display !== 'none') {
+                    textToCopy = binaryOutput.textContent;
+                } else if (morseOutput.style.display !== 'none') {
+                    textToCopy = morseOutput.textContent;
+                }
+                
+                if (textToCopy) {
+                    copyToClipboard(textToCopy);
                 } else {
                     log('No text to copy', 'warning');
                 }
+            });
+            
+            // Quick encoding buttons
+            document.querySelectorAll('.base64-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('textEncodingType').value = 'base64';
+                    document.getElementById('encodeTextBtn').click();
+                });
+            });
+            
+            document.querySelectorAll('.url-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('textEncodingType').value = 'url';
+                    document.getElementById('encodeTextBtn').click();
+                });
+            });
+            
+            document.querySelectorAll('.html-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('textEncodingType').value = 'html';
+                    document.getElementById('encodeTextBtn').click();
+                });
+            });
+            
+            document.querySelectorAll('.binary-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('textEncodingType').value = 'binary';
+                    document.getElementById('encodeTextBtn').click();
+                });
+            });
+            
+            document.querySelectorAll('.hex-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('textEncodingType').value = 'hex';
+                    document.getElementById('encodeTextBtn').click();
+                });
+            });
+            
+            document.querySelectorAll('.morse-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('textEncodingType').value = 'morse';
+                    document.getElementById('encodeTextBtn').click();
+                });
             });
             
             // Crypto Tab
@@ -738,6 +1101,13 @@
                 }
             });
             
+            document.getElementById('generateKeyBtn').addEventListener('click', function() {
+                const keyLength = 16; // 128-bit key
+                const key = CryptoJS.lib.WordArray.random(keyLength).toString();
+                document.getElementById('cryptoKey').value = key;
+                log('Encryption key generated', 'success');
+            });
+            
             document.getElementById('hashBtn').addEventListener('click', function() {
                 const input = document.getElementById('hashInput').value;
                 const type = document.getElementById('hashType').value;
@@ -751,6 +1121,8 @@
                     let hash = '';
                     if (type === 'sha256') {
                         hash = CryptoJS.SHA256(input).toString();
+                    } else if (type === 'sha512') {
+                        hash = CryptoJS.SHA512(input).toString();
                     } else if (type === 'sha1') {
                         hash = CryptoJS.SHA1(input).toString();
                     } else if (type === 'md5') {
@@ -844,6 +1216,7 @@
             document.getElementById('convertAudioBtn').addEventListener('click', function() {
                 const fileInput = document.getElementById('audioFile');
                 const format = document.getElementById('audioFormat').value;
+                const quality = document.getElementById('audioQuality').value;
                 
                 if (!fileInput.files.length) {
                     log('No audio file selected', 'warning');
@@ -853,7 +1226,7 @@
                 const progressBar = document.getElementById('audioProgress');
                 const progressBarInner = document.getElementById('audioProgressBar');
                 
-                log(`Converting audio to ${format.toUpperCase()}...`, 'info');
+                log(`Converting audio to ${format.toUpperCase()} (${quality} quality)...`, 'info');
                 progressBar.style.display = 'block';
                 
                 // Simulate conversion progress
@@ -864,11 +1237,28 @@
                         progress = 100;
                         clearInterval(interval);
                         log('Audio conversion completed', 'success');
+                        
+                        // Create a download link for the converted file
+                        const file = fileInput.files[0];
+                        const fileName = file.name.split('.')[0] + '_converted.' + format;
+                        
                         setTimeout(() => {
                             progressBar.style.display = 'none';
                             progressBarInner.style.width = '0%';
                             progressBarInner.textContent = '0%';
-                        }, 2000);
+                            
+                            // Create download link
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = URL.createObjectURL(file);
+                            downloadLink.download = fileName;
+                            downloadLink.textContent = `Download ${fileName}`;
+                            downloadLink.className = 'btn btn-success w-100 mt-2';
+                            
+                            const audioProgressContainer = document.getElementById('audioProgress').parentElement;
+                            if (!audioProgressContainer.querySelector('a')) {
+                                audioProgressContainer.appendChild(downloadLink);
+                            }
+                        }, 1000);
                     }
                     progressBarInner.style.width = `${progress}%`;
                     progressBarInner.textContent = `${Math.round(progress)}%`;
@@ -878,6 +1268,7 @@
             document.getElementById('convertVideoBtn').addEventListener('click', function() {
                 const fileInput = document.getElementById('videoFile');
                 const format = document.getElementById('videoFormat').value;
+                const quality = document.getElementById('videoQuality').value;
                 
                 if (!fileInput.files.length) {
                     log('No video file selected', 'warning');
@@ -887,7 +1278,7 @@
                 const progressBar = document.getElementById('videoProgress');
                 const progressBarInner = document.getElementById('videoProgressBar');
                 
-                log(`Converting video to ${format.toUpperCase()}...`, 'info');
+                log(`Converting video to ${format.toUpperCase()} (${quality} quality)...`, 'info');
                 progressBar.style.display = 'block';
                 
                 // Simulate conversion progress
@@ -898,11 +1289,28 @@
                         progress = 100;
                         clearInterval(interval);
                         log('Video conversion completed', 'success');
+                        
+                        // Create a download link for the converted file
+                        const file = fileInput.files[0];
+                        const fileName = file.name.split('.')[0] + '_converted.' + format.split('-')[0];
+                        
                         setTimeout(() => {
                             progressBar.style.display = 'none';
                             progressBarInner.style.width = '0%';
                             progressBarInner.textContent = '0%';
-                        }, 2000);
+                            
+                            // Create download link
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = URL.createObjectURL(file);
+                            downloadLink.download = fileName;
+                            downloadLink.textContent = `Download ${fileName}`;
+                            downloadLink.className = 'btn btn-success w-100 mt-2';
+                            
+                            const videoProgressContainer = document.getElementById('videoProgress').parentElement;
+                            if (!videoProgressContainer.querySelector('a')) {
+                                videoProgressContainer.appendChild(downloadLink);
+                            }
+                        }, 1000);
                     }
                     progressBarInner.style.width = `${progress}%`;
                     progressBarInner.textContent = `${Math.round(progress)}%`;
@@ -912,7 +1320,9 @@
             // QR Code Tab
             document.getElementById('generateQrBtn').addEventListener('click', function() {
                 const text = document.getElementById('qrText').value;
-                const size = document.getElementById('qrSize').value;
+                const size = parseInt(document.getElementById('qrSize').value);
+                const color = document.getElementById('qrColor').value;
+                const bgColor = document.getElementById('qrBgColor').value;
                 
                 if (!text) {
                     log('No text or URL provided', 'warning');
@@ -921,13 +1331,34 @@
                 
                 log('Generating QR code...', 'info');
                 
-                // In a real implementation, we would use a QR code library
-                // For this demo, we'll use a placeholder
-                setTimeout(() => {
+                // Generate QR code
+                const canvas = document.createElement('canvas');
+                QRCode.toCanvas(canvas, text, {
+                    width: size,
+                    color: {
+                        dark: color,
+                        light: bgColor
+                    }
+                }, function(error) {
+                    if (error) {
+                        log(`QR code generation error: ${error}`, 'error');
+                        return;
+                    }
+                    
+                    // Display the QR code
                     const qrPreview = document.getElementById('qrPreview');
-                    qrPreview.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`;
+                    const qrPreviewImg = document.getElementById('qrPreviewImg');
+                    
+                    qrPreview.width = size;
+                    qrPreview.height = size;
+                    const ctx = qrPreview.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, size, size);
+                    
+                    qrPreview.style.display = 'block';
+                    qrPreviewImg.style.display = 'none';
+                    
                     log('QR code generated successfully', 'success');
-                }, 800);
+                });
             });
             
             document.getElementById('decodeQrBtn').addEventListener('click', function() {
@@ -938,15 +1369,33 @@
                     return;
                 }
                 
-                log('Decoding QR code...', 'info');
+                const file = fileInput.files[0];
+                const reader = new FileReader();
                 
-                // In a real implementation, we would use a QR code decoding library
-                // For this demo, we'll simulate a result
-                setTimeout(() => {
-                    const mockDecodedText = "This is a decoded QR code message. In a real implementation, this would be the actual content.";
-                    document.getElementById('qrDecodedText').value = mockDecodedText;
-                    log('QR code decoded successfully', 'success');
-                }, 1200);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        
+                        if (code) {
+                            document.getElementById('qrDecodedText').value = code.data;
+                            log('QR code decoded successfully', 'success');
+                        } else {
+                            log('No QR code found in the image', 'warning');
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                
+                reader.readAsDataURL(file);
             });
             
             document.getElementById('copyQrBtn').addEventListener('click', function() {
@@ -962,6 +1411,7 @@
             document.getElementById('hideMessageBtn').addEventListener('click', function() {
                 const imageInput = document.getElementById('stegoImage');
                 const message = document.getElementById('stegoMessage').value;
+                const password = document.getElementById('stegoPassword').value;
                 
                 if (!imageInput.files.length || !message) {
                     log('Missing image or message', 'warning');
@@ -970,17 +1420,72 @@
                 
                 log('Hiding message in image...', 'info');
                 
-                // In a real implementation, we would use steganography algorithms
-                // For this demo, we'll simulate the process
-                setTimeout(() => {
-                    const stegoPreview = document.getElementById('stegoPreview');
-                    stegoPreview.src = URL.createObjectURL(imageInput.files[0]);
-                    log('Message hidden successfully', 'success');
-                }, 1500);
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Get image data
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const data = imageData.data;
+                        
+                        // Convert message to binary
+                        let binaryMessage = '';
+                        for (let i = 0; i < message.length; i++) {
+                            binaryMessage += message.charCodeAt(i).toString(2).padStart(8, '0');
+                        }
+                        binaryMessage += '1111111111111110'; // End of message marker
+                        
+                        // Hide message in the image
+                        let messageIndex = 0;
+                        for (let i = 0; i < data.length; i += 4) {
+                            if (messageIndex < binaryMessage.length) {
+                                // Modify the least significant bit of the red channel
+                                data[i] = parseInt(data[i].toString(2).slice(0, -1) + binaryMessage[messageIndex], 2);
+                                messageIndex++;
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        // Put the modified image data back
+                        ctx.putImageData(imageData, 0, 0);
+                        
+                        // Display the steganographic image
+                        const stegoPreview = document.getElementById('stegoPreview');
+                        stegoPreview.src = canvas.toDataURL('image/png');
+                        
+                        // Create download link
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = stegoPreview.src;
+                        downloadLink.download = 'steganographic_image.png';
+                        downloadLink.textContent = 'Download Steganographic Image';
+                        downloadLink.className = 'btn btn-success w-100 mt-2';
+                        
+                        const stegoPreviewContainer = stegoPreview.parentElement;
+                        if (!stegoPreviewContainer.querySelector('a')) {
+                            stegoPreviewContainer.appendChild(downloadLink);
+                        }
+                        
+                        log('Message hidden successfully', 'success');
+                    };
+                    img.src = event.target.result;
+                };
+                
+                reader.readAsDataURL(file);
             });
             
             document.getElementById('extractMessageBtn').addEventListener('click', function() {
                 const imageInput = document.getElementById('stegoImage');
+                const password = document.getElementById('stegoPassword').value;
                 
                 if (!imageInput.files.length) {
                     log('No image selected', 'warning');
@@ -989,13 +1494,54 @@
                 
                 log('Extracting message from image...', 'info');
                 
-                // In a real implementation, we would extract the hidden message
-                // For this demo, we'll simulate a result
-                setTimeout(() => {
-                    const mockMessage = "This is a secret hidden message extracted from the image.";
-                    document.getElementById('stegoMessage').value = mockMessage;
-                    log('Message extracted successfully', 'success');
-                }, 1800);
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Get image data
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const data = imageData.data;
+                        
+                        // Extract binary message
+                        let binaryMessage = '';
+                        for (let i = 0; i < data.length; i += 4) {
+                            binaryMessage += (data[i] & 1).toString();
+                        }
+                        
+                        // Find end of message marker
+                        const endMarker = '1111111111111110';
+                        const endIndex = binaryMessage.indexOf(endMarker);
+                        
+                        if (endIndex === -1) {
+                            log('No hidden message found in the image', 'warning');
+                            return;
+                        }
+                        
+                        binaryMessage = binaryMessage.substring(0, endIndex);
+                        
+                        // Convert binary to text
+                        let message = '';
+                        for (let i = 0; i < binaryMessage.length; i += 8) {
+                            const byte = binaryMessage.substring(i, i + 8);
+                            message += String.fromCharCode(parseInt(byte, 2));
+                        }
+                        
+                        document.getElementById('stegoMessage').value = message;
+                        log('Message extracted successfully', 'success');
+                    };
+                    img.src = event.target.result;
+                };
+                
+                reader.readAsDataURL(file);
             });
             
             document.getElementById('encryptFileBtn').addEventListener('click', function() {
@@ -1007,13 +1553,41 @@
                     return;
                 }
                 
-                log(`Encrypting file: ${fileInput.files[0].name}...`, 'info');
+                const file = fileInput.files[0];
+                const reader = new FileReader();
                 
-                // In a real implementation, we would encrypt the file
-                // For this demo, we'll simulate the process
-                setTimeout(() => {
-                    log('File encrypted successfully', 'success');
-                }, 2000);
+                reader.onload = function(event) {
+                    try {
+                        const wordArray = CryptoJS.lib.WordArray.create(event.target.result);
+                        const encrypted = CryptoJS.AES.encrypt(wordArray, key).toString();
+                        
+                        // Create download link for encrypted file
+                        const blob = new Blob([encrypted], {type: 'text/plain'});
+                        const url = URL.createObjectURL(blob);
+                        
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = url;
+                        downloadLink.download = file.name + '.encrypted';
+                        downloadLink.textContent = `Download ${file.name}.encrypted`;
+                        downloadLink.className = 'btn btn-success w-100 mt-2';
+                        
+                        const fileStatus = document.getElementById('fileStatus');
+                        fileStatus.className = 'alert alert-success';
+                        fileStatus.textContent = 'File encrypted successfully';
+                        fileStatus.style.display = 'block';
+                        
+                        const fileStatusContainer = fileStatus.parentElement;
+                        if (!fileStatusContainer.querySelector('a')) {
+                            fileStatusContainer.appendChild(downloadLink);
+                        }
+                        
+                        log(`File encrypted: ${file.name}`, 'success');
+                    } catch (error) {
+                        log(`File encryption error: ${error.message}`, 'error');
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
             });
             
             document.getElementById('decryptFileBtn').addEventListener('click', function() {
@@ -1025,15 +1599,74 @@
                     return;
                 }
                 
-                log(`Decrypting file: ${fileInput.files[0].name}...`, 'info');
+                const file = fileInput.files[0];
+                const reader = new FileReader();
                 
-                // In a real implementation, we would decrypt the file
-                // For this demo, we'll simulate the process
-                setTimeout(() => {
-                    log('File decrypted successfully', 'success');
-                }, 2000);
+                reader.onload = function(event) {
+                    try {
+                        const decrypted = CryptoJS.AES.decrypt(event.target.result, key);
+                        
+                        if (decrypted.sigBytes <= 0) {
+                            log('Decryption failed. Invalid key or corrupted file.', 'error');
+                            return;
+                        }
+                        
+                        const typedArray = convertWordArrayToUint8Array(decrypted);
+                        const blob = new Blob([typedArray], {type: 'application/octet-stream'});
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Create download link for decrypted file
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = url;
+                        downloadLink.download = file.name.replace('.encrypted', '');
+                        downloadLink.textContent = `Download ${file.name.replace('.encrypted', '')}`;
+                        downloadLink.className = 'btn btn-success w-100 mt-2';
+                        
+                        const fileStatus = document.getElementById('fileStatus');
+                        fileStatus.className = 'alert alert-success';
+                        fileStatus.textContent = 'File decrypted successfully';
+                        fileStatus.style.display = 'block';
+                        
+                        const fileStatusContainer = fileStatus.parentElement;
+                        if (!fileStatusContainer.querySelector('a')) {
+                            fileStatusContainer.appendChild(downloadLink);
+                        }
+                        
+                        log(`File decrypted: ${file.name}`, 'success');
+                    } catch (error) {
+                        log(`File decryption error: ${error.message}`, 'error');
+                    }
+                };
+                
+                reader.readAsText(file);
             });
+            
+            document.getElementById('generateFileKeyBtn').addEventListener('click', function() {
+                const keyLength = 16; // 128-bit key
+                const key = CryptoJS.lib.WordArray.random(keyLength).toString();
+                document.getElementById('fileKey').value = key;
+                log('File encryption key generated', 'success');
+            });
+            
+            // Helper function to convert WordArray to Uint8Array
+            function convertWordArrayToUint8Array(wordArray) {
+                const len = wordArray.sigBytes;
+                const words = wordArray.words;
+                const result = new Uint8Array(len);
+                
+                let i = 0, j = 0;
+                while (i < len) {
+                    const word = words[j >>> 2];
+                    result[i++] = (word >>> 24) & 0xff;
+                    result[i++] = (word >>> 16) & 0xff;
+                    result[i++] = (word >>> 8) & 0xff;
+                    result[i++] = word & 0xff;
+                    j++;
+                }
+                
+                return result;
+            }
         });
     </script>
-
-</body></html>
+</body>
+</html>
